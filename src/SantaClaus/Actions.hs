@@ -30,8 +30,7 @@ groupTask
   -> m ThreadId
 groupTask task gp id = do
   let task' = doGroupTask gp (task id) >> randomDelay
-  a <- async $ forever task'
-  pure $ asyncThreadId a
+  asyncThreadId <$> async (forever task')
   where
     doGroupTask :: (MonadLogger m) => Group -> m () -> m ()
     doGroupTask group doTask = joinGroup group >>=
@@ -50,7 +49,6 @@ santa' elfGroup reinGroup = do
     [ (awaitGroup reinGroup, run "deliver toys")
     , (awaitGroup elfGroup, run "meet in my study")
     ]
-
   where
     run :: (MonadLogger m, MonadIO m) => Text -> (Gate, Gate) -> m ()
     run task (inGate, outGate) = do

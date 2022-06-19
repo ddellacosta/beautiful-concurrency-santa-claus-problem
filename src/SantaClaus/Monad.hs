@@ -16,7 +16,7 @@ import Control.Monad.Reader (runReaderT, ReaderT, MonadIO (..), MonadReader (..)
 import Data.Text (Text)
 import qualified Data.Text.IO as TIO
 import qualified SantaClaus.Logger as Logger
-import SantaClaus.Logger (initLogger, newLogger, Logger (..))
+import SantaClaus.Logger (Logger)
 import UnliftIO (MonadUnliftIO (..))
 
 data Env = Env { logger :: Logger }
