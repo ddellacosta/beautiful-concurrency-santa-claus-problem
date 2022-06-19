@@ -1,0 +1,87 @@
+cabal-version:      3.0
+name:               stm-santa-claus-mtl
+version:            0.1.0.0
+synopsis:
+
+-- A longer description of the package.
+-- description:
+homepage:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Dave Della Costa
+maintainer:         ddellacosta@gmail.com
+
+-- A copyright notice.
+copyright:          All rights reserved, Dave Della Costa 2022
+category:           Concurrency
+extra-source-files: CHANGELOG.md
+
+common deps
+  build-depends:
+   , async ^>= 2.2.4
+                      -- , base ^>= 4.14.1.0
+   , base ^>= 4.15.1.0
+                      --, bytestring ^>= 0.11.0.0
+                      --, bytestring ^>= 0.10.12.0
+                      --, bytestring ^>= 0.10.10.0
+--   , containers ^>= 0.6.4.1
+                      -- , dhall ^>= 1.32.0
+                      -- , directory ^>= 1.3.6.0
+                      -- , exceptions ^>= 0.10.4
+                      --, lens ^>= 4.19.2
+                      --, megaparsec ^>= 9.0.0
+                      --, megaparsec ^>= 8.0.0
+                      --, midi-alsa ^>= 0.2.1
+   , mtl ^>=2.2.2
+                      --, pretty-simple ^>= 4.0.0.0
+   , random
+   , stm ^>= 2.5.0.0
+   , text ^>= 1.2.5.0
+   , unliftio ^>= 0.2.20
+--   , time ^>= 1.9.3
+--   , transformers ^>= 0.5.6.2
+--   , unordered-containers ^>= 0.2.16.0
+  ghc-options: -haddock
+  default-extensions:
+     OverloadedStrings
+   , LambdaCase
+   , TupleSections
+
+library
+  import:           deps
+  exposed-modules:  Basic, SantaClaus.Actions, SantaClaus.Gate, SantaClaus.Group, SantaClaus.Logger, SantaClaus.Monad
+
+  -- Modules included in this library but not exported.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
+executable stm-santa-claus-mtl
+  import:           deps
+  main-is:          Main.hs
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+
+  build-depends:    stm-santa-claus-mtl
+
+  hs-source-dirs:   app
+  default-language: Haskell2010
+
+test-suite stm-santa-claus-mtl-test
+  import:           deps
+
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          MyLibTest.hs
+  build-depends:    base ^>=4.15.1.0

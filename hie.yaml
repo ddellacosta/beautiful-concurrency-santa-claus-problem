@@ -1,0 +1,8 @@
+cradle:
+  cabal:
+    - path: "./app/Main.hs"
+      component: "stm-santa-claus-mtl:exe:stm-santa-claus-mtl"
+    - path: "./src/"
+      component: "stm-santa-claus-mtl:lib:stm-santa-claus-mtl"
+    - path: "./test/"
+      component: "stm-santa-claus-mtl:test"
