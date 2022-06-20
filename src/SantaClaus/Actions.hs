@@ -2,7 +2,7 @@
 
 module SantaClaus.Actions
   (
-    santa
+    santaAction
   ,
   )
 where
@@ -22,28 +22,8 @@ import System.Random (getStdRandom, randomR)
 import UnliftIO (atomically, orElse, MonadUnliftIO)
 import UnliftIO.Async (async, asyncThreadId)
 
-groupTask
-  :: (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m)
-  => (Int -> m ())
-  -> Group
-  -> Int
-  -> m ThreadId
-groupTask task gp id = do
-  let task' = doGroupTask gp (task id) >> randomDelay
-  asyncThreadId <$> async (forever task')
-  where
-    doGroupTask :: (MonadLogger m) => Group -> m () -> m ()
-    doGroupTask group doTask = joinGroup group >>=
-      \(inGate, outGate) ->
-        passGate inGate >> doTask >> passGate outGate
-
-randomDelay :: (MonadIO m) => m ()
-randomDelay = do
-  waitTime <- getStdRandom $ randomR (1, 1000000)
-  liftIO $ threadDelay waitTime
-
-santa' :: (MonadIO m, MonadLogger m) => Group -> Group -> m ()
-santa' elfGroup reinGroup = do
+runReadySantaAction :: (MonadIO m, MonadLogger m) => Group -> Group -> m ()
+runReadySantaAction elfGroup reinGroup = do
   logMsg "----------" 
   choose
     [ (awaitGroup reinGroup, run "deliver toys")
@@ -62,13 +42,33 @@ choose choices = join $ atomically $ foldr1 orElse actions
     actions =
       [ choiceAction <$> guard | (guard, choiceAction) <- choices ]
 
-santa :: (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m) => m ()
-santa = do
+groupTask
+  :: (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m)
+  => (Int -> m ())
+  -> Group
+  -> Int
+  -> m ThreadId
+groupTask task gp id = do
+  let task' = doGroupTask gp (task id) >> randomDelay
+  asyncThreadId <$> async (forever task')
+  where
+    doGroupTask :: (MonadLogger m) => Group -> m () -> m ()
+    doGroupTask group doTask = joinGroup group >>=
+      \(inGate, outGate) ->
+        passGate inGate >> doTask >> passGate outGate
+
+    randomDelay :: (MonadIO m) => m ()
+    randomDelay = do
+      waitTime <- getStdRandom $ randomR (1, 1000000)
+      liftIO $ threadDelay waitTime
+
+santaAction :: (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m) => m ()
+santaAction = do
   elfGroup <- liftIO $ newGroup 3
   sequence_ [ elf elfGroup n | n <- [1..10] ]
   reinGroup <- liftIO $ newGroup 9
   sequence_ [ reindeer reinGroup n | n <- [1..9] ]
-  forever $ santa' elfGroup reinGroup
+  forever $ runReadySantaAction elfGroup reinGroup
   where
     elf = groupTask meetInStudy
     reindeer = groupTask deliverToys

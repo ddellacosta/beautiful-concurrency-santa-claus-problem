@@ -32,6 +32,6 @@ awaitGroup :: Group -> STM (Gate, Gate)
 awaitGroup (MkGroup n tv) = do
   (nLeft, g1, g2) <- readTVar tv
   check $ nLeft == 0
-  let [newG1, newG2] = take 2 $ repeat $ newGate n
+  let [newG1, newG2] = [ newGate n | n <- [1..2] ]
   writeTVar tv =<< (n,,) <$> newG1 <*> newG2
   pure (g1, g2)
