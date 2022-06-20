@@ -22,8 +22,8 @@ import System.Random (getStdRandom, randomR)
 import UnliftIO (atomically, orElse, MonadUnliftIO)
 import UnliftIO.Async (async, asyncThreadId)
 
-runReadySantaAction :: (MonadIO m, MonadLogger m) => Group -> Group -> m ()
-runReadySantaAction elfGroup reinGroup = do
+runReadySubAction :: (MonadIO m, MonadLogger m) => Group -> Group -> m ()
+runReadySubAction elfGroup reinGroup = do
   logMsg "----------" 
   choose
     [ (awaitGroup reinGroup, run "deliver toys")
@@ -68,7 +68,7 @@ santaAction = do
   sequence_ [ elf elfGroup n | n <- [1..10] ]
   reinGroup <- liftIO $ newGroup 9
   sequence_ [ reindeer reinGroup n | n <- [1..9] ]
-  forever $ runReadySantaAction elfGroup reinGroup
+  forever $ runReadySubAction elfGroup reinGroup
   where
     elf = groupTask meetInStudy
     reindeer = groupTask deliverToys
