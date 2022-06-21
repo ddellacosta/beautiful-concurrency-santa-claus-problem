@@ -1,25 +1,25 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-} 
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module SantaClaus.Monad
-  (
-    Env (..)
+  ( Env (..)
   , MonadLogger (..)
   , runSanta
-  ,
   )
-  where
+where
 
-import Control.Concurrent.STM (atomically, isEmptyTQueue, newTQueue, readTQueue, writeTQueue, TQueue)
+import Control.Concurrent.STM (TQueue, atomically, isEmptyTQueue, newTQueue, readTQueue, writeTQueue)
 import Control.Monad (forever)
-import Control.Monad.Reader (runReaderT, ReaderT, MonadIO (..), MonadReader (..))
+import Control.Monad.Reader (MonadIO (..), MonadReader (..), ReaderT, runReaderT)
 import Data.Text (Text)
 import qualified Data.Text.IO as TIO
-import qualified SantaClaus.Logger as Logger
 import SantaClaus.Logger (Logger)
+import qualified SantaClaus.Logger as Logger
 import UnliftIO (MonadUnliftIO (..))
 
-data Env = Env { logger :: Logger }
+data Env = Env
+  { logger :: Logger
+  }
 
 newtype SantaMonad a = SantaMonad { unSanta :: ReaderT Env IO a }
   deriving (Functor, Applicative, Monad, MonadIO, MonadReader Env, MonadUnliftIO)
@@ -33,4 +33,4 @@ instance MonadLogger SantaMonad where
     liftIO $ Logger.logMsg logger t
 
 runSanta :: SantaMonad () -> Env -> IO ()
-runSanta sm env = runReaderT (unSanta sm) env
+runSanta = runReaderT . unSanta

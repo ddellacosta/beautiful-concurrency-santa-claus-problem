@@ -1,30 +1,29 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module SantaClaus.Actions
-  (
-    santaAction
+  ( santaAction
   ,
   )
 where
 
-import Control.Concurrent (forkIO, threadDelay, ThreadId)
+import Control.Concurrent (ThreadId, forkIO, threadDelay)
 import Control.Monad (forever, join)
 import Control.Monad.Reader (MonadIO (..), MonadReader (..))
 import Control.Monad.STM (STM)
-import qualified Data.Text as T
 import Data.Text (Text)
-import qualified SantaClaus.Logger as Logger
-import SantaClaus.Group (awaitGroup, joinGroup, newGroup, Group)
-import SantaClaus.Gate (operateGate, passGate, Gate)
+import qualified Data.Text as T
+import SantaClaus.Gate (Gate, operateGate, passGate)
+import SantaClaus.Group (Group, awaitGroup, joinGroup, newGroup)
 import SantaClaus.Logger (Logger)
+import qualified SantaClaus.Logger as Logger
 import SantaClaus.Monad (Env (..), MonadLogger (..))
 import System.Random (getStdRandom, randomR)
-import UnliftIO (atomically, orElse, MonadUnliftIO)
+import UnliftIO (MonadUnliftIO, atomically, orElse)
 import UnliftIO.Async (async, asyncThreadId)
 
 runReadySubAction :: (MonadIO m, MonadLogger m) => Group -> Group -> m ()
 runReadySubAction elfGroup reinGroup = do
-  logMsg "----------" 
+  logMsg "----------"
   choose
     [ (awaitGroup reinGroup, run "deliver toys")
     , (awaitGroup elfGroup, run "meet in my study")
@@ -38,43 +37,41 @@ runReadySubAction elfGroup reinGroup = do
 
 choose :: (MonadLogger m, MonadIO m) => [(STM a, a -> m ())] -> m ()
 choose choices = join $ atomically $ foldr1 orElse actions
-  where 
-    actions =
-      [ choiceAction <$> guard | (guard, choiceAction) <- choices ]
+  where
+    actions = [choiceAction <$> guard | (guard, choiceAction) <- choices]
 
-groupTask
-  :: (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m)
-  => (Int -> m ())
-  -> Group
-  -> Int
-  -> m ThreadId
+groupTask ::
+  (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m) =>
+  (Int -> m ()) ->
+  Group ->
+  Int ->
+  m ThreadId
 groupTask task gp id = do
   let task' = doGroupTask gp (task id) >> randomDelay
   asyncThreadId <$> async (forever task')
   where
     doGroupTask :: (MonadLogger m) => Group -> m () -> m ()
-    doGroupTask group doTask = joinGroup group >>=
-      \(inGate, outGate) ->
+    doGroupTask group doTask =
+      joinGroup group >>= \(inGate, outGate) ->
         passGate inGate >> doTask >> passGate outGate
 
     randomDelay :: (MonadIO m) => m ()
-    randomDelay = do
-      waitTime <- getStdRandom $ randomR (1, 1000000)
-      liftIO $ threadDelay waitTime
+    randomDelay = liftIO . threadDelay =<< getStdRandom (randomR (1, 1000000))
 
-santaAction :: (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m) => m ()
+santaAction ::
+  (MonadIO m, MonadLogger m, MonadReader Env m, MonadUnliftIO m) => m ()
 santaAction = do
   elfGroup <- liftIO $ newGroup 3
-  sequence_ [ elf elfGroup n | n <- [1..10] ]
+  sequence_ [elf elfGroup n | n <- [1 .. 10]]
   reinGroup <- liftIO $ newGroup 9
-  sequence_ [ reindeer reinGroup n | n <- [1..9] ]
+  sequence_ [reindeer reinGroup n | n <- [1 .. 9]]
   forever $ runReadySubAction elfGroup reinGroup
   where
     elf = groupTask meetInStudy
     reindeer = groupTask deliverToys
 
     meetInStudy, deliverToys :: (MonadLogger m) => Int -> m ()
-    meetInStudy id = do 
+    meetInStudy id = do
       logMsg $ T.pack $ "Elf " <> show id <> " meeting in the study"
     deliverToys id = do
       logMsg $ T.pack $ "Reindeer " <> show id <> " delivering toys"
