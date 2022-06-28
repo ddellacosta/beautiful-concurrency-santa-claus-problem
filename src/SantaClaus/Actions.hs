@@ -6,7 +6,7 @@ module SantaClaus.Actions
   )
 where
 
-import Control.Concurrent (ThreadId, forkIO, threadDelay)
+import Control.Concurrent (ThreadId, threadDelay)
 import Control.Monad (forever, join)
 import Control.Monad.Reader (MonadIO (..), MonadReader (..))
 import Control.Monad.STM (STM)
